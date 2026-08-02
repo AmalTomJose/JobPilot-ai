@@ -1,0 +1,161 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+.landing{
+    width:100%;
+}
+
+/* Navbar */
+
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 60px;
+    background:white;
+    box-shadow:0 2px 10px rgba(0,0,0,.1);
+}
+
+.logo{
+    font-size:28px;
+    font-weight:bold;
+    color:#2563eb;
+}
+
+.nav-links{
+    display:flex;
+    gap:30px;
+    list-style:none;
+}
+
+.nav-links li{
+    cursor:pointer;
+}
+
+.buttons{
+    display:flex;
+    gap:15px;
+}
+
+.login-btn{
+    padding:10px 20px;
+    background:white;
+    border:1px solid #2563eb;
+    color:#2563eb;
+    cursor:pointer;
+}
+
+.signup-btn{
+    padding:10px 20px;
+    border:none;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+}
+
+/* Hero */
+
+.hero{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:80px 100px;
+}
+
+.hero-left{
+    width:50%;
+}
+
+.hero-left h1{
+    font-size:55px;
+    margin-bottom:25px;
+}
+
+.hero-left p{
+    font-size:20px;
+    color:gray;
+    margin-bottom:35px;
+}
+
+.hero-buttons{
+    display:flex;
+    gap:20px;
+}
+
+.primary-btn{
+    padding:15px 30px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+
+.secondary-btn{
+    padding:15px 30px;
+    border:1px solid #2563eb;
+    color:#2563eb;
+    background:white;
+    cursor:pointer;
+}
+
+.hero-right{
+    width:40%;
+}
+
+.dashboard-preview{
+    background:white;
+    border-radius:15px;
+    padding:40px;
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+
+.dashboard-preview h2{
+    color:#2563eb;
+    font-size:55px;
+    margin:20px 0;
+}
+
+/* Features */
+
+.features{
+    padding:80px;
+    background:#f8fafc;
+}
+
+.features h2{
+    text-align:center;
+    margin-bottom:40px;
+}
+
+.feature-container{
+    display:flex;
+    gap:30px;
+}
+
+.feature-card{
+    flex:1;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 5px 20px rgba(0,0,0,.1);
+}
+
+.feature-card h3{
+    margin-bottom:20px;
+}
+
+/* Footer */
+
+footer{
+    background:#111827;
+    color:white;
+    padding:40px;
+    text-align:center;
+}
