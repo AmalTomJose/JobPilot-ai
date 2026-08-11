@@ -1,8 +1,9 @@
 import "./Home.css";
+import {Link} from "react-router-dom";
 
-function Landing() {
+function Home() {
   return (
-    <div className="landing">
+    <div className="home">
 
       {/* Navbar */}
 
@@ -20,7 +21,8 @@ function Landing() {
         </ul>
 
         <div className="buttons">
-          <button className="login-btn">
+          <button className="login-btn" >
+            <Link to ="/login"/>
             Login
           </button>
 
@@ -130,4 +132,4 @@ function Landing() {
   );
 }
 
-export default Landing;
+export default Home;

@@ -13,5 +13,3 @@ SessionLocal = sessionmaker(
 )
 
 
-class Base(DeclarativeBase):
-    pass
