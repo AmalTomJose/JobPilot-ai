@@ -58,14 +58,7 @@ def login(
 
         user = service.login(data)
 
-        return {
-            "message": "Login successful",
-            "user": {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email
-            }
-        }
+        return user
 
     except ValueError as error:
 
