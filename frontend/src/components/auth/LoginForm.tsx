@@ -1,13 +1,15 @@
-import { Link } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 import {useForm} from "react-hook-form";
 
 import type {LoginFormData} from "../../types/auth.types";
 import { loginSchema } from "../../schemas/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { authService } from "../../services/auth.service";
+import { useAuth } from "../../hooks/useAuth";
 
 
 const LoginForm = () => {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -15,10 +17,13 @@ const LoginForm = () => {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema)
   })
+  const{login} = useAuth()
 
   const onSubmit =  async (data:LoginFormData ) => {
-      let response = await authService.login(data )
-      console.log(response)
+      const response = await authService.login(data );
+      login(response);
+      console.log("User logged in:", response.user);
+      navigate("/dashboard");
   }
 
   return (

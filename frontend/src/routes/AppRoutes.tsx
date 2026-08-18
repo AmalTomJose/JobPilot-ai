@@ -14,6 +14,9 @@ import Home from '../pages/Home/Home'
 import MainLayout from "../layouts/MainLayout"
 import AuthLayout from "../layouts/AuthLayout"
 
+//protecedRoute
+import ProtectedRoute from "./ProtectedRoute"
+
 
 function AppRoutes() {
   return (
@@ -30,6 +33,7 @@ function AppRoutes() {
             <Route path="/register" element={<Register/>}/>
         </Route>
       {/* Protected */}
+      <Route element= {<ProtectedRoute/>}>
         <Route element = {<MainLayout/>}>
             <Route path="dashboard" element={<Dashboard/>}/>
             <Route path="profile" element={<Profile/>}/>
@@ -39,6 +43,7 @@ function AppRoutes() {
             <Route path="resume" element={<Resume/>}/>
             
         </Route>  
+      </Route>
       {/* 404 */}
         <Route path="*" element={<NotFound/>}/>
     </Routes>

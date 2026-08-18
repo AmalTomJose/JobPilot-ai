@@ -8,8 +8,11 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_db
+from app.core.get_current_user import get_current_user
 from app.schemas.auth import RegisterRequest,LoginRequest
 from app.services.auth_service import AuthService
+from app.models.user import User
+
 
 
 router = APIRouter(
@@ -66,3 +69,13 @@ def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(error)
         )
+
+@router.get("/me")
+def get_me(
+    current_user: User = Depends(get_current_user)
+):
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email
+    }

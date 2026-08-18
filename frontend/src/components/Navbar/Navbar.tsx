@@ -1,4 +1,9 @@
+import { useAuth } from "../../hooks/useAuth";
+
 const Navbar = () => {
+  
+  const {user,logout} = useAuth();
+  console.log("USER:", user);
     return (
       <nav
         style={{
@@ -11,6 +16,8 @@ const Navbar = () => {
         }}
       >
         <h2>JobPilot AI</h2>
+        <h1>{user?.name ? user.name : "Normal value"}</h1>
+        <button onClick = {logout}>Logout Fucker!!!!!</button>
       </nav>
     );
   };
