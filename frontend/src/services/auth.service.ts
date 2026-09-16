@@ -1,24 +1,18 @@
-import type { LoginFormData } from "../types/auth.types";
-import type { RegisterFormData } from "../types/auth.types";
-
-import api from "../api/axios";
-
+import type { LoginFormData, LoginResponse, RegisterFormData } from '../types/auth.types';
+import type { User } from '../types/user.types';
+import api from '../api/axios';
 export const authService = {
-    login: async (data: LoginFormData) => {
-        console.log("Login request:", data);
-        const response = await api.post('/auth/login', data);
-        console.log(response.data)
-        return response.data
+    async login(data: LoginFormData): Promise<LoginResponse> {
+        return (await api.post<LoginResponse>('/auth/login', data)).data;
     },
-    register: async (data: RegisterFormData) => {
-        console.log("Register request:", data);
-
-        const response = await api.post('/auth/register', data);
-        console.log(response.data)
-       
+    async register(data: RegisterFormData): Promise<{
+        message: string;
+        user: User;
+    }> {
+        const { name, email, password } = data;
+        return (await api.post('/auth/register', { name, email, password })).data;
     },
-    getCurrentUser: async ()=>{
-        const response = await api.get('/auth/me');
-        return response.data;
-    }
+    async getCurrentUser(): Promise<User> {
+        return (await api.get<User>('/auth/me')).data;
+    },
 };

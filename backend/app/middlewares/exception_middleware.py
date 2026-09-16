@@ -28,6 +28,7 @@ def register_exception_handlers(app: FastAPI):
     ):
         return JSONResponse(
             status_code=exc.status_code,
+            headers={"WWW-Authenticate": "Bearer"} if exc.status_code == 401 else None,
             content={
                 "success": False,
                 "message": exc.message
@@ -62,6 +63,7 @@ def register_exception_handlers(app: FastAPI):
     ):
         return JSONResponse(
             status_code=exc.status_code,
+            headers=exc.headers,
             content={
                 "success": False,
                 "message": str(exc.detail)

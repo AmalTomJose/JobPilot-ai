@@ -1,81 +1,25 @@
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    status
-)
-
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
 from app.core.dependencies import get_db
 from app.core.get_current_user import get_current_user
-from app.schemas.auth import RegisterRequest,LoginRequest
+from app.schemas.auth import RegisterRequest, LoginRequest, LoginResponse, RegisterResponse, UserResponse
 from app.services.auth_service import AuthService
 from app.models.user import User
 
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Authentication"]
-)
+@router.post("/register", response_model=RegisterResponse, status_code=201)
+def register(data: RegisterRequest, db: Session = Depends(get_db)):
+    user = AuthService(db).register(data)
+    return {"message": "Account created. You can now sign in", "user": user}
 
 
+@router.post("/login", response_model=LoginResponse)
+def login(data: LoginRequest, db: Session = Depends(get_db)):
+    return AuthService(db).login(data)
 
-@router.post("/register")
-def register(
-    data: RegisterRequest,
-    db: Session = Depends(get_db)
-):
 
-    service = AuthService(db)
-
-    try:
-
-        user = service.register(data)
-
-        return {
-            "message": "Registration successful",
-            "user": {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email
-            }
-        }
-
-    except ValueError as error:
-
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(error)
-        )
-@router.post("/login")
-def login(
-    data: LoginRequest,
-    db: Session = Depends(get_db)
-):
-
-    service = AuthService(db)
-
-    try:
-
-        user = service.login(data)
-
-        return user
-
-    except ValueError as error:
-
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(error)
-        )
-
-@router.get("/me")
-def get_me(
-    current_user: User = Depends(get_current_user)
-):
-    return {
-        "id": current_user.id,
-        "name": current_user.name,
-        "email": current_user.email
-    }
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user

@@ -1,27 +1,39 @@
-import { NavLink } from "react-router-dom";
-
-const Sidebar = () => {
-  return (
-    <aside
-      style={{
-        width: "220px",
-        background: "#f3f4f6",
-        padding: "20px",
-        minHeight: "100vh",
-      }}
-    >
-      <h3>Menu</h3>
-
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        <li><NavLink to="/dashboard">Dashboard</NavLink></li>
-        <li><NavLink to="/profile">Profile</NavLink></li>
-        <li><NavLink to="/resume">Resume</NavLink></li>
-        <li><NavLink to="/jobs">Jobs</NavLink></li>
-        <li><NavLink to="/applications">Applications</NavLink></li>
-        <li><NavLink to="/settings">Settings</NavLink></li>
-      </ul>
-    </aside>
-  );
-};
-
-export default Sidebar;
+import { Link, NavLink } from 'react-router-dom';
+import Icon, { type IconName } from '../ui/Icon';
+const links: {
+    to: string;
+    label: string;
+    icon: IconName;
+}[] = [
+    { to: '/dashboard', label: 'Overview', icon: 'grid' },
+    { to: '/resume', label: 'My resume', icon: 'file' },
+    { to: '/profile', label: 'Profile', icon: 'user' },
+    { to: '/jobs', label: 'Discover jobs', icon: 'briefcase' },
+    { to: '/applications', label: 'Applications', icon: 'send' },
+    { to: '/settings', label: 'Settings', icon: 'settings' },
+];
+export default function Sidebar() {
+    return <aside className="sidebar">
+    <Link className="brand" to="/dashboard">
+    <span className="brand-mark">J<span>↗</span>
+    </span>
+    <span>JobPilot<span className="brand-ai">AI</span>
+    </span>
+    </Link>
+    <span className="nav-caption">YOUR WORKSPACE</span>
+    <nav aria-label="Main navigation" className="side-nav">{links.map(link => <NavLink key={link.to} to={link.to} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+        <Icon name={link.icon}/>{link.label}</NavLink>)}</nav>
+    <div className="sidebar-bottom">
+    <div className="sidebar-note">
+    <span className="small-orbit">
+    <Icon name="spark"/>
+    </span>
+    <h3>Start with your story.</h3>
+    <p>A great next step begins with a clear picture of you.</p>
+    <Link to="/resume">Add your resume <Icon name="arrow" size={16}/>
+    </Link>
+    </div>
+    <div className="sidebar-foot">A little more direction. Every day.</div>
+    </div>
+    </aside>;
+}

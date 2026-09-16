@@ -56,3 +56,6 @@ yarn-error.log*
 # Misc
 # =========================
 .idea/
+# Private uploaded documents
+backend/uploads/
+!**/.env.example

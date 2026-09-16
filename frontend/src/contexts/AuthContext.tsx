@@ -1,98 +1,62 @@
-import {
-    createContext,
-    useState,
-    useEffect,
-    type ReactNode,
-} from "react";
-
-import type { User } from "../types/user.types";
-import type { LoginResponse } from "../types/auth.types";
-import { authService } from "../services/auth.service";
-
-
-type AuthContextType = {
-    user: User | null;
-    isAuthenticated: boolean;
-    loading:boolean,
-    login: (response: LoginResponse) => void;
-    logout: () => void;
-};
-
-
-export const AuthContext =
-    createContext<AuthContextType | undefined>(undefined);
-
-
-type AuthProviderProps = {
+import { useState, useEffect, type ReactNode } from 'react';
+import axios from 'axios';
+import type { User } from '../types/user.types';
+import type { LoginResponse } from '../types/auth.types';
+import { authService } from '../services/auth.service';
+import { AuthContext } from './auth-context';
+export function AuthProvider({ children }: {
     children: ReactNode;
-};
-
-
-export function AuthProvider({
-    children,
-}: AuthProviderProps) {
-
+}) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
-
-    useEffect(()=>{
-        const restoreUser = async ()=>{
-            const token =localStorage.getItem("access_token");
-            if(!token){
+    const [sessionError, setSessionError] = useState('');
+    const [attempt, setAttempt] = useState(0);
+    useEffect(() => {
+        let active = true;
+        let expired = false;
+        const clearSession = () => {
+            expired = true;
+            setUser(null);
+            setSessionError('');
+        };
+        window.addEventListener('session-expired', clearSession);
+        async function restore() {
+            const restoringToken = localStorage.getItem('access_token');
+            if (!restoringToken) {
                 setLoading(false);
                 return;
             }
-            try{
-                const currentUser=await authService.getCurrentUser();
-                setUser(currentUser);
+            try {
+                const currentUser = await authService.getCurrentUser();
+                if (active && !expired && localStorage.getItem('access_token') === restoringToken)
+                    setUser(currentUser);
             }
-            catch(error){
-                console.error("Failed to restore user:", error);
-                localStorage.removeItem("access_token");
-                setUser(null);
+            catch (error) {
+                if (!active || expired || localStorage.getItem('access_token') !== restoringToken)
+                    return;
+                if (axios.isAxiosError(error) && error.response?.status === 401) {
+                    localStorage.removeItem('access_token');
+                    setUser(null);
+                }
+                else {
+                    setSessionError('We could not reconnect to your account. Your session is saved; try again when the server is available.');
+                }
             }
-            finally{
-                setLoading(false);
+            finally {
+                if (active)
+                    setLoading(false);
             }
         }
-        restoreUser();
-    },[]);
-
-
+        void restore();
+        return () => { active = false; window.removeEventListener('session-expired', clearSession); };
+    }, [attempt]);
     const login = (response: LoginResponse) => {
-
-        localStorage.setItem(
-            "access_token",
-            response.access_token
-        );
-        console.log("userlogin:", response.user);
-
+        localStorage.setItem('access_token', response.access_token);
+        setSessionError('');
+        setLoading(false);
         setUser(response.user);
     };
-
-
-    const logout = () => {
-
-        localStorage.removeItem("access_token");
-
-        setUser(null);
-    };
-
-
-    const isAuthenticated = user !== null;
-
-
-    return (
-        <AuthContext.Provider
-            value={{
-                user,
-                isAuthenticated,
-                loading,
-                login,
-                logout,
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
-    );
+    const logout = () => { localStorage.removeItem('access_token'); setSessionError(''); setUser(null); };
+    const retrySession = () => { setLoading(true); setSessionError(''); setAttempt(value => value + 1); };
+    return <AuthContext.Provider value={{ user, isAuthenticated: user !== null, loading, sessionError, retrySession, login, logout }}>{children}</AuthContext.Provider>;
 }

@@ -9,6 +9,7 @@ from alembic import context
 from app.database.base import Base
 from app.core.config import settings
 from app.models.user import User
+from app.models.resume import Resume
 
 
 
@@ -46,7 +47,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = settings.DATABASE_URL
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -67,7 +68,7 @@ def run_migrations_online() -> None:
     """
     config.set_main_option(
     "sqlalchemy.url",
-    settings.DATABASE_URL
+    settings.DATABASE_URL.replace("%", "%%")
     )
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),

@@ -1,106 +1,45 @@
-import { Link,useNavigate } from "react-router-dom";
-import {useForm} from "react-hook-form";
-
-import type {LoginFormData} from "../../types/auth.types";
-import { loginSchema } from "../../schemas/auth.schema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { authService } from "../../services/auth.service";
-import { useAuth } from "../../hooks/useAuth";
-
-
-const LoginForm = () => {
-  const navigate = useNavigate();
-  const {
-    register,
-    handleSubmit,
-    formState: {errors,isSubmitting}
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema)
-  })
-  const{login} = useAuth()
-
-  const onSubmit =  async (data:LoginFormData ) => {
-      const response = await authService.login(data );
-      login(response);
-      console.log("User logged in:", response.user);
-      navigate("/dashboard");
-  }
-
-  return (
-    <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-
-      <h2 className="text-3xl font-bold text-center">
-        Welcome Back
-      </h2>
-
-      <p className="text-gray-500 text-center mt-2">
-        Login to your account
-      </p>
-
-      <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
-
-        <div>
-          <label className="block mb-2 font-medium">
-            Email
-          </label>
-
-          <input
-            placeholder="Enter your email"
-            {...register("email")}
-            className="w-full border rounded-lg p-3"
-          />
-          {errors.email && (
-            <p>
-              {errors.email.message}  
-            </p>
-          )}
-
-        </div>
-
-        <div>
-          <label className="block mb-2 font-medium">
-            Password
-          </label>
-
-          <input
-      
-            placeholder="Enter your password"
-            {...register("password")}
-            className="w-full border rounded-lg p-3"
-          />
-          {errors.password && (
-            <p>
-              {errors.password.message}
-            </p>
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-blue-600 text-white rounded-lg p-3 hover:bg-blue-700"
-        >{
-          isSubmitting ?"Signing In..." : "Sign In"
+import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { LoginFormData } from '../../types/auth.types';
+import { loginSchema } from '../../schemas/auth.schema';
+import { authService } from '../../services/auth.service';
+import { apiError } from '../../api/axios';
+import { useAuth } from '../../hooks/useAuth';
+import Icon from '../ui/Icon';
+export default function LoginForm() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { login } = useAuth();
+    const [error, setError] = useState('');
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) });
+    async function onSubmit(data: LoginFormData) {
+        setError('');
+        try {
+            login(await authService.login(data));
+            const from = location.state?.from;
+            const destination = typeof from?.pathname === 'string' && from.pathname.startsWith('/') && !from.pathname.startsWith('//') ? from.pathname + (from.search || '') + (from.hash || '') : '/dashboard';
+            navigate(destination, { replace: true });
         }
-        </button>
-
-      </form>
-
-      <p className="text-center mt-6">
-
-        Don't have an account?
-
-        <Link
-          to="/register"
-          className="text-blue-600 ml-2"
-        >
-          Register
-        </Link>
-
-      </p>
-
-    </div>
-  );
-};
-
-export default LoginForm;
+        catch (err) {
+            setError(apiError(err));
+        }
+    }
+    return <section className="auth-form">
+    <span className="eyebrow">WELCOME BACK</span>
+    <h1>Your next step<br />starts here.</h1>
+    <p className="muted">Sign in to your personal career workspace.</p>{location.state?.registered && <div className="notice success" role="status">Account created. Sign in to get started.</div>}{error && <div className="notice error" role="alert">{error}</div>}<form onSubmit={handleSubmit(onSubmit)} noValidate>
+    <div className="field">
+    <label htmlFor="login-email">Email address</label>
+    <input id="login-email" type="email" autoComplete="email" placeholder="you@example.com" {...register('email')} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'login-email-error' : undefined}/>{errors.email && <span className="field-error" id="login-email-error">{errors.email.message}</span>}</div>
+    <div className="field">
+    <label htmlFor="login-password">Password</label>
+    <input id="login-password" type="password" autoComplete="current-password" placeholder="Enter your password" {...register('password')} aria-invalid={!!errors.password} aria-describedby={errors.password ? 'login-password-error' : undefined}/>{errors.password && <span className="field-error" id="login-password-error">{errors.password.message}</span>}</div>
+    <button className="btn btn-primary btn-full" disabled={isSubmitting}>{isSubmitting ? 'Signing in…' : 'Sign in'}<Icon name="arrow" size={18}/>
+    </button>
+    </form>
+    <p className="auth-switch">New here? <Link to="/register">Create an account</Link>
+    </p>
+    </section>;
+}

@@ -1,5 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+from app.middlewares.exception_middleware import UserException
 
 from app.models.user import User
 
@@ -30,9 +32,19 @@ class UserRepository:
             password_hash=password_hash
         )
 
-        self.db.add(user)
-        self.db.commit()
-        self.db.refresh(user)
+        try:
+            self.db.add(user)
+            self.db.flush()
+            self.db.refresh(user)
+            self.db.commit()
+        except IntegrityError as error:
+            self.db.rollback()
+            if self.get_by_email(email) is not None:
+                raise UserException(409, "Email already registered") from error
+            raise
+        except Exception:
+            self.db.rollback()
+            raise
 
         return user
     
