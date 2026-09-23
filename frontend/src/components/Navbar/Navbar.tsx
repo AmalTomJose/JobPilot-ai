@@ -1,12 +1,14 @@
+import type { Ref } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import Icon from '../ui/Icon';
-export default function Navbar() {
+export default function Navbar({sidebarOpen, onToggleSidebar, toggleRef}: {sidebarOpen: boolean; onToggleSidebar: () => void; toggleRef: Ref<HTMLButtonElement>}) {
     const { user, logout } = useAuth();
     const { pathname } = useLocation();
     const labels: Record<string, string> = { '/dashboard': 'Overview', '/resume': 'My resume', '/profile': 'Profile', '/jobs': 'Discover jobs', '/applications': 'Applications', '/settings': 'Settings' };
     return <header className="topbar">
-    <div className="breadcrumb">Workspace <span>/</span> <strong>{labels[pathname]}</strong>
+    <div className="topbar-navigation"><button ref={toggleRef} type="button" className="icon-button sidebar-toggle" aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} aria-expanded={sidebarOpen} aria-controls="workspace-sidebar" onClick={onToggleSidebar}><Icon name="menu"/></button><div className="breadcrumb">Workspace <span>/</span> <strong>{labels[pathname] ?? (pathname.startsWith('/resume/') ? 'Resume review' : 'Workspace')}</strong>
+    </div>
     </div>
     <div className="topbar-actions">
     <span className="workspace-badge">

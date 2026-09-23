@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
-export type IconName = 'grid' | 'file' | 'user' | 'briefcase' | 'send' | 'settings' | 'arrow' | 'upload' | 'check' | 'logout' | 'spark' | 'shield' | 'mail' | 'clock';
+export type IconName = 'menu' | 'close' | 'grid' | 'file' | 'user' | 'briefcase' | 'send' | 'settings' | 'arrow' | 'upload' | 'check' | 'logout' | 'spark' | 'shield' | 'mail' | 'clock';
 const paths: Record<IconName, string> = {
+    menu: 'M4 6h16 M4 12h16 M4 18h16',
+    close: 'M6 6l12 12 M18 6 6 18',
     grid: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
     file: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5',
     user: 'M20 21v-2a7 7 0 0 0-14 0v2 M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',

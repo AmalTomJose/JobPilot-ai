@@ -3,7 +3,7 @@ import { resumeService } from '../../services/resume.service';
 import type { ResumeResponse } from '../../types/resume.types';
 import { apiError } from '../../api/axios';
 import Icon from '../ui/Icon';
-export default function ResumeUpload() {
+export default function ResumeUpload({ onUploaded }: { onUploaded?: (resume: ResumeResponse) => void }) {
     const input = useRef<HTMLInputElement>(null);
     const [file, setFile] = useState<File | null>(null);
     const [resume, setResume] = useState<ResumeResponse | null>(null);
@@ -37,7 +37,9 @@ export default function ResumeUpload() {
         setError('');
         setResume(null);
         try {
-            setResume(await resumeService.uploadResume(file));
+            const uploaded = await resumeService.uploadResume(file);
+            setResume(uploaded);
+            onUploaded?.(uploaded);
         }
         catch (err) {
             setError(apiError(err, 'Your resume could not be uploaded. Please try again.'));
@@ -78,7 +80,7 @@ export default function ResumeUpload() {
     <button className="btn btn-primary" disabled={!file || loading || !!resume} onClick={upload}>{loading ? 'Uploading & extracting…' : resume ? 'Upload complete' : 'Upload & extract'}<Icon name={resume ? 'check' : 'arrow'} size={17}/>
     </button>
     </div>
-    <p className="form-note">Already uploaded a resume? Upload history will be available in a future update.</p>
+    <p className="form-note">Your saved uploads are available in the list below.</p>
     </section>{resume && <section className="card extraction-result">
         <div className="notice success" role="status">
         <Icon name="check" size={18}/>Resume saved and text extracted successfully.</div>
@@ -88,6 +90,6 @@ export default function ResumeUpload() {
         <summary>Preview extracted text</summary>
         <pre>{resume.raw_text}</pre>
         </details>
-        <p className="form-note">This is the original extracted text. Structured parsing and an editable review page are coming next.</p>
+        <p className="form-note">This is the original extracted text. Build a structured draft below.</p>
         </section>}</div>;
 }

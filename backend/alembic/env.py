@@ -8,8 +8,10 @@ from alembic import context
 #my imports:
 from app.database.base import Base
 from app.core.config import settings
+from app.models.profile import Profile
 from app.models.user import User
 from app.models.resume import Resume
+from app.models.resume_parse import ResumeParse
 
 
 

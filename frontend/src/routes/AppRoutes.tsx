@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { createBrowserRouter, createRoutesFromElements, RouterProvider, Route } from "react-router-dom";
+import ResumeReview from '../pages/ResumeReview/ResumeReview';
 import Login from '../pages/Login/Login';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import Profile from '../pages/Profile/Profile';
@@ -14,10 +15,7 @@ import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 //protecedRoute
 import ProtectedRoute from "./ProtectedRoute";
-function AppRoutes() {
-    return (<BrowserRouter>
-  
-    <Routes>
+const router = createBrowserRouter(createRoutesFromElements(<>
       {/* Public */}
 
         <Route path="/" element={<Home />}/>
@@ -36,14 +34,12 @@ function AppRoutes() {
             <Route path="applications" element={<Applications />}/>
             <Route path="jobs" element={<Jobs />}/>
             <Route path="resume" element={<Resume />}/>
+            <Route path="resume/:resumeId/review" element={<ResumeReview />}/>
             
         </Route>  
       </Route>
       {/* 404 */}
         <Route path="*" element={<NotFound />}/>
-    </Routes>
-
-
-   </BrowserRouter>);
-}
+</>));
+function AppRoutes() { return <RouterProvider router={router}/>; }
 export default AppRoutes;

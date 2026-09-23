@@ -25,5 +25,5 @@ class ResumeRepository:
     def get_by_id(self, resume_id: int, user_id: int) -> Resume | None:
         return self.db.scalar(select(Resume).where(Resume.id == resume_id, Resume.user_id == user_id))
 
-    def get_by_user_id(self, user_id: int) -> list[Resume]:
-        return list(self.db.scalars(select(Resume).where(Resume.user_id == user_id).order_by(Resume.created_at.desc())))
+    def get_by_user_id(self, user_id: int, *, limit: int = 50, offset: int = 0) -> list[Resume]:
+        return list(self.db.scalars(select(Resume).where(Resume.user_id == user_id).order_by(Resume.created_at.desc(), Resume.id.desc()).limit(limit).offset(offset)))

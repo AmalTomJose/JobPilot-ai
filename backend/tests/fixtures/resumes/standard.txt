@@ -1,0 +1,36 @@
+Name: Alex Morgan
+alex@example.com
+Phone: +1 (415) 555-0123
+Location: Seattle
+https://github.com/alex
+
+PROFESSIONAL SUMMARY
+Backend developer building APIs.
+
+TECHNICAL SKILLS
+Python, FastAPI, PostgreSQL
+C++, C#, Node.js, CI/CD, Python
+
+WORK EXPERIENCE
+Backend Developer
+Example Company
+2023 - Present
+• Built REST APIs.
+• Improved response times.
+
+Data Analyst | Sample Labs | 2021 - 2023
+- Created reports.
+
+EDUCATION
+BSc Computer Science
+Example University
+2021
+
+PROJECTS
+Project: Resume Explorer
+Technologies: Python, FastAPI
+- Explores resume documents.
+https://github.com/alex/resume
+
+CERTIFICATIONS
+Example Certificate

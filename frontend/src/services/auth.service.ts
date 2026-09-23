@@ -3,6 +3,7 @@ import type { User } from '../types/user.types';
 import api from '../api/axios';
 export const authService = {
     async login(data: LoginFormData): Promise<LoginResponse> {
+        console.log('The data is :', data);
         return (await api.post<LoginResponse>('/auth/login', data)).data;
     },
     async register(data: RegisterFormData): Promise<{

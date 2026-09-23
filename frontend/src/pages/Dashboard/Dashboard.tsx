@@ -1,12 +1,14 @@
+import ProfileSummary from '../../components/Profile/ProfileSummary';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import Icon, { type IconName } from '../../components/ui/Icon';
 import PageHeader from '../../components/ui/PageHeader';
-const steps = [{ number: '01', title: 'Bring your experience', text: 'Upload your resume as a PDF.', icon: 'upload' }, { number: '02', title: 'Make it readable', text: 'Extract the text from your document.', icon: 'file' }, { number: '03', title: 'Build your profile', text: 'Review structured details. Coming next.', icon: 'user' }] as const;
+const steps = [{ number: '01', title: 'Bring your experience', text: 'Upload your resume as a PDF.', icon: 'upload' }, { number: '02', title: 'Make it readable', text: 'Extract text and build a structured draft.', icon: 'file' }, { number: '03', title: 'Build your profile', text: 'Review your draft and confirm your profile.', icon: 'user' }] as const;
 export default function Dashboard() {
     const { user } = useAuth();
     return <>
     <PageHeader eyebrow="YOUR CAREER, IN FOCUS" title={`Welcome back, ${user?.name.split(' ')[0] || 'there'}.`} description="A little clarity today. A little closer to your next chapter." action={<span className="date-chip">Your personal workspace</span>}/>
+    <ProfileSummary/>
     <section className="welcome-banner">
     <div className="welcome-copy">
     <span className="pill light">
@@ -61,7 +63,7 @@ export default function Dashboard() {
         <span className="step-number">{step.number}</span>
         </div>
         <h3>{step.title}</h3>
-        <p>{step.text}</p>{step.number === '03' && <span className="pill neutral">Coming next</span>}</div>)}</div>
+        <p>{step.text}</p></div>)}</div>
     </section>
     <section className="section-block">
     <div className="section-heading">
