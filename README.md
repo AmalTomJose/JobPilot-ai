@@ -4,13 +4,23 @@ A learning project for turning a resume into a reviewed career profile, then usi
 
 ## Current milestone
 
-Sprint 3 adds editable extraction review, separately saved confirmed profiles, a real profile page, a dashboard summary, and an open/close sidebar button. It builds on Sprint 1 authentication/PDF extraction and Sprint 2 rule-based parsing.
+Sprint 5 adds explainable job matching: compare your confirmed profile with saved jobs, review matched/missing skills and coverage, and refresh outdated results. Sprint 4 job intake and the earlier resume/profile workflows remain available.
 
 **Current data flow:** PDF → original `raw_text` in `resumes` → Build draft → structured JSON in `resume_parses` → review and correct fields → explicitly confirm → independent JSON in `profiles` → Profile and Overview.
 
-Job ingestion, matching, AI tailoring, and application automation remain later milestones. A confirmed profile is never overwritten by rebuilding a parsed draft.
+**Job data flow:** pasted email → original text and extraction draft in `job_imports` → review and confirm → independent fields in `jobs` → Job inbox. Manual entry saves directly to `jobs`.
 
-See the [Sprint 3 report](docs/SPRINT_3_REPORT.md) for the new table, workflow, API, and validation. The [Sprint 2 report](docs/SPRINT_2_REPORT.md) documents the parser, and the [Sprint 1 report](docs/SPRINT_1_REPORT.md) documents the foundation.
+**Matching flow:** confirmed profile skills + saved job skills → Find matches → versioned results in `job_matches` → ranked Matches page.
+
+Automatic mailbox ingestion, AI tailoring, and application automation remain later milestones. A confirmed profile is never overwritten by rebuilding a parsed draft.
+
+See the [Sprint 5 report](docs/SPRINT_5_REPORT.md) for scoring, snapshots, APIs, and validation. See the [Sprint 4 report](docs/SPRINT_4_REPORT.md) for the job workflow, tables, APIs, validation, and limitations. See the [Sprint 3 report](docs/SPRINT_3_REPORT.md) for the new table, workflow, API, and validation. The [Sprint 2 report](docs/SPRINT_2_REPORT.md) documents the parser, and the [Sprint 1 report](docs/SPRINT_1_REPORT.md) documents the foundation.
+
+### Extraction quality update
+
+Resume and job-email parsing now use version 2 rules, with layout-aware PDF reading, more common headings and entry formats, multiline email fields, and improved application-link selection. See the [extraction improvement report](docs/EXTRACTION_V2_REPORT.md) for supported formats, tests, and limitations.
+
+For existing resumes, **Rebuild draft** updates parsing of stored text; **upload the PDF again** to use the improved PDF reading order. Pasting an identical unsaved job email again refreshes an older parser draft. Confirmed profiles and saved jobs are not overwritten.
 
 ## Requirements
 
@@ -66,7 +76,7 @@ API documentation: [localhost:8000/docs](http://localhost:8000/docs).
 
 ### Migration notes
 
-The migration head is `c83f1a520bd4`. Run `python -m alembic upgrade head` to add the `profiles` table (and `resume_parses` if upgrading from Sprint 1). These migrations add tables; existing resume text and parsed drafts are not rewritten.
+The migration head is `e05b3c742df6`. Run `python -m alembic upgrade head` to add `job_matches`, along with any earlier unapplied migrations. These migrations add tables; existing resume text and parsed drafts are not rewritten.
 
 Two historical migrations were repaired for new databases and databases still on earlier revisions:
 
@@ -104,7 +114,9 @@ Open [localhost:5173](http://localhost:5173). Restart Vite if you change its env
 5. Inspect contact details, summary, skills, experience, education, projects, warnings, and source blocks. **Rebuild draft** explicitly replaces the current draft.
 6. Select **Review & confirm profile**. Correct contact details, summary, skills, experience, education, and projects. The original text and parser notes remain available for comparison.
 7. Check the review confirmation and choose **Save confirmed profile**. Open **Profile** to see the result or **Edit profile** to update it. Overview displays counts from these confirmed details.
-8. Use the menu button in the top bar to open or close the sidebar. Mobile starts closed. Changes to the sidebar do not discard form edits.
+8. Open **Job inbox**. Add a job manually, or paste one job email, extract its draft, review the fields, check confirmation, and save. Pending imports can be reopened from the inbox. Saved jobs support search, filters, editing, and archiving.
+9. Open **Matches** and choose **Find matches**. Inspect skill coverage and alias evidence. After profile/job edits, rerun matching to refresh outdated results. Archived jobs are excluded from runs.
+10. Use the menu button in the top bar to open or close the sidebar. Mobile starts closed. Changes to the sidebar do not discard form edits.
 
 Reviewing the same source resume loads your saved corrections. Reviewing a different resume starts from that draft and explicitly warns that saving will replace the current profile. Older tabs cannot overwrite newer profile saves: reload the latest version after a conflict. Unsaved edits are held in page memory, with warnings for route navigation and browser unload; there is no autosave or offline recovery.
 
@@ -134,7 +146,7 @@ npm run lint
 npm run build
 ```
 
-The frontend tests use Node's test runner and compile the real TypeScript modules in memory. No extra test framework dependency was added. Sprint 2 frontend tests cover authenticated history requests, separate source/draft retrieval, explicit rebuilding, failed parse responses, and initial panel state. Sprint 3 adds form conversion, independent source data, authenticated profile saving, error handling, and safe profile rendering tests.
+The frontend tests use Node's test runner and compile the real TypeScript modules in memory. No extra test framework dependency was added. Sprint 2 frontend tests cover authenticated history requests, separate source/draft retrieval, explicit rebuilding, failed parse responses, and initial panel state. Sprint 3 adds form conversion, independent source data, authenticated profile saving, error handling, and safe profile rendering tests. Sprint 4 adds job form conversion, authenticated intake and saving, revision checks, filter requests, duplicate responses, and a regression check against logging login credentials. Sprint 5 covers authenticated matching requests, score states, stale-result presentation, alias evidence, escaped content, and conflicts.
 
 `npm test` runs the test files currently present in `frontend/tests`. The previously deleted Sprint 1 frontend test file was not restored during Sprint 2.
 
@@ -163,13 +175,13 @@ Clean up this disposable container after testing:
 docker stop jobpilot-sprint1-migration-test
 ```
 
-Ordinary backend test discovery skips these five tests unless the explicit test URL is provided.
+Ordinary backend test discovery skips these seven tests unless the explicit test URL is provided.
 
 ## Code map
 
 - `backend/app/api/routes`: HTTP endpoints and response contracts.
-- `backend/app/services`: authentication, upload orchestration, PDF extraction, rule-based parsing, and confirmed-profile saving.
-- `backend/app/repositories`: database persistence and owner-scoped resume queries.
+- `backend/app/services`: authentication, upload orchestration, PDF extraction, rule-based resume/job parsing, confirmed-profile saving, job intake/saving, and deterministic skill matching.
+- `backend/app/repositories`: database persistence and owner-scoped resume, profile, and job queries.
 - `backend/app/models` and `schemas`: database entities and validated API data.
 - `frontend/src/contexts`: user/session state.
 - `frontend/src/api` and `services`: API client and endpoint calls.

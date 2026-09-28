@@ -69,7 +69,7 @@ export default function Dashboard() {
     <div className="section-heading">
     <h2>A workspace that grows with you</h2>
     </div>
-    <div className="two-columns">{([{ icon: 'briefcase', title: 'Find your fit', text: 'Job discovery and matching will bring opportunities closer to your experience.', to: '/jobs', link: 'Explore what’s ahead' }, { icon: 'send', title: 'Keep your next move in view', text: 'A dedicated place for your applications, from first interest to the next conversation.', to: '/applications', link: 'Visit applications' }] as {
+    <div className="two-columns">{([{ icon: 'briefcase', title: 'Build your job inbox', text: 'Add an opening or paste a job email, review its details, and keep it in your inbox.', to: '/jobs', link: 'Open your job inbox' }, { icon: 'spark', title: 'Find where your skills fit', text: 'Compare your confirmed profile with saved jobs and see matched and missing skills.', to: '/matches', link: 'Explore your matches' }] as {
             icon: IconName;
             title: string;
             text: string;
@@ -80,7 +80,7 @@ export default function Dashboard() {
         <Icon name={card.icon}/>
         </span>
         <div>
-        <span className="eyebrow">ON THE ROADMAP</span>
+        <span className="eyebrow">READY TO USE</span>
         <h3>{card.title}</h3>
         <p>{card.text}</p>
         <span className="text-link">{card.link} <Icon name="arrow" size={16}/>

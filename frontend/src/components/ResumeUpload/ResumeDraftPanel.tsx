@@ -107,6 +107,7 @@ export default function ResumeDraftPanel({selectedId, onSelect, refreshKey}: {
                 <button className="btn btn-primary" disabled={parsing || !resume.raw_text?.trim()} onClick={buildDraft}><Icon name="spark" size={17}/>{parsing ? 'Building draft…' : draft ? 'Rebuild draft' : parsed?.status === 'failed' ? 'Retry parsing' : 'Build draft'}</button>
             </div>
             {!resume.raw_text?.trim() && <p className="notice error">This document has no extracted text. Upload a text-based PDF.</p>}
+            <p className="form-note">Rebuild draft to use the latest parsing rules. If the original text below is out of order or incomplete, upload the PDF again to use the improved text extraction. Your confirmed profile stays unchanged.</p>
             <SourceText text={resume.raw_text ?? ''} label="Original extracted text"/>
             {parsed?.status === 'failed' && <p className="notice error" role="alert">{parsed.error_message}</p>}
             {draft && <>

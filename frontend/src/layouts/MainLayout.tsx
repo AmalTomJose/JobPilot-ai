@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { Suspense, useRef, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar/Sidebar';
 import Navbar from '../components/Navbar/Navbar';
@@ -12,7 +12,7 @@ export default function MainLayout() {
     <div className="workspace">
     <Navbar sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(open => !open)} toggleRef={toggleRef}/>
     <main id="main-content" className="page-content">
-    <Outlet />
+    <Suspense fallback={<p role="status">Opening your workspace…</p>}><Outlet /></Suspense>
     </main>
     <footer className="workspace-footer">
     <span>JobPilot AI</span>

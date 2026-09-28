@@ -45,7 +45,7 @@ class ProfileAPITests(unittest.TestCase):
         self.assertEqual(result.status_code, 200, result.text)
         body = result.json()
         self.assertEqual(body['revision'], 1)
-        self.assertEqual(body['source_parser_version'], 'rules-v1')
+        self.assertEqual(body['source_parser_version'], 'rules-v3')
         self.assertEqual(body['data']['contact']['name'], 'Reviewed Name')
         self.assertEqual(self.client.get('/profile', headers=self.headers).json(), body)
         self.assertEqual(self.client.get(f'/resume/{resume_id}/parse', headers=self.headers).json(), before)

@@ -33,7 +33,7 @@ class ParsingAPITests(unittest.TestCase):
         result = response.json()
         self.assertEqual(result['status'], 'completed')
         self.assertEqual(result['draft_data']['contact']['name'], 'Alex Morgan')
-        self.assertEqual(result['parser_version'], 'rules-v1')
+        self.assertEqual(result['parser_version'], 'rules-v3')
         self.assertTrue(result['completed_at'])
         with self.sessions() as db:
             self.assertEqual(db.get(Resume, resume_id).raw_text, source)

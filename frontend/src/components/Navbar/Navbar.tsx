@@ -5,9 +5,9 @@ import Icon from '../ui/Icon';
 export default function Navbar({sidebarOpen, onToggleSidebar, toggleRef}: {sidebarOpen: boolean; onToggleSidebar: () => void; toggleRef: Ref<HTMLButtonElement>}) {
     const { user, logout } = useAuth();
     const { pathname } = useLocation();
-    const labels: Record<string, string> = { '/dashboard': 'Overview', '/resume': 'My resume', '/profile': 'Profile', '/jobs': 'Discover jobs', '/applications': 'Applications', '/settings': 'Settings' };
+    const labels: Record<string, string> = { '/dashboard': 'Overview', '/resume': 'My resume', '/profile': 'Profile', '/jobs': 'Job inbox', '/matches': 'Matches', '/applications': 'Applications', '/settings': 'Settings' };
     return <header className="topbar">
-    <div className="topbar-navigation"><button ref={toggleRef} type="button" className="icon-button sidebar-toggle" aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} aria-expanded={sidebarOpen} aria-controls="workspace-sidebar" onClick={onToggleSidebar}><Icon name="menu"/></button><div className="breadcrumb">Workspace <span>/</span> <strong>{labels[pathname] ?? (pathname.startsWith('/resume/') ? 'Resume review' : 'Workspace')}</strong>
+    <div className="topbar-navigation"><button ref={toggleRef} type="button" className="icon-button sidebar-toggle" aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} aria-expanded={sidebarOpen} aria-controls="workspace-sidebar" onClick={onToggleSidebar}><Icon name="menu"/></button><div className="breadcrumb">Workspace <span>/</span> <strong>{labels[pathname] ?? (pathname.startsWith('/resume/') ? 'Resume review' : pathname.startsWith('/jobs/') ? 'Job inbox' : 'Workspace')}</strong>
     </div>
     </div>
     <div className="topbar-actions">

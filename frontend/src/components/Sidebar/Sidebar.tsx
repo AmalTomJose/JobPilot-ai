@@ -8,7 +8,8 @@ const links: {
     { to: '/dashboard', label: 'Overview', icon: 'grid' },
     { to: '/resume', label: 'My resume', icon: 'file' },
     { to: '/profile', label: 'Profile', icon: 'user' },
-    { to: '/jobs', label: 'Discover jobs', icon: 'briefcase' },
+    { to: '/jobs', label: 'Job inbox', icon: 'briefcase' },
+    { to: '/matches', label: 'Matches', icon: 'spark' },
     { to: '/applications', label: 'Applications', icon: 'send' },
     { to: '/settings', label: 'Settings', icon: 'settings' },
 ];

@@ -1,0 +1,15 @@
+Subject: An opening at Example Labs
+
+Job title: Backend Developer
+Company: Example Labs
+Location: Bengaluru
+Work mode: Hybrid
+Employment type: Full-time
+Skills: Python, SQL, FastAPI, Python
+Apply: https://example.com/jobs/123?utm_source=email
+Description:
+Build REST APIs with our engineering team.
+
+Write tests and maintain services.
+Requirements:
+Experience with Python and SQL.

@@ -9,10 +9,12 @@ class UserException(Exception):
     def __init__(
         self,
         status_code: int,
-        message: str
+        message: str,
+        details: dict | None = None
     ):
         self.status_code = status_code
         self.message = message
+        self.details = details
 
 
 def register_exception_handlers(app: FastAPI):
@@ -31,7 +33,8 @@ def register_exception_handlers(app: FastAPI):
             headers={"WWW-Authenticate": "Bearer"} if exc.status_code == 401 else None,
             content={
                 "success": False,
-                "message": exc.message
+                "message": exc.message,
+                **({"details": exc.details} if exc.details is not None else {}),
             }
         )
 

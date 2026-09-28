@@ -159,5 +159,82 @@ class PostgresMigrationTests(unittest.TestCase):
             self.assertEqual(connection.scalar(text('SELECT status FROM resume_parses WHERE resume_id=:id'), {'id': resume_id}), 'completed')
 
 
+    def test_sprint4_imports_jobs_constraints_and_migration(self):
+        from sqlalchemy.orm import Session
+        from app.models.user import User
+        from app.models.resume import Resume
+        from app.models.job import Job, JobImport
+        from app.repositories.job_repository import JobRepository
+        from app.services.job_service import JobService
+        from app.schemas.job import JobCreate
+        from app.middlewares.exception_middleware import UserException
+        from sqlalchemy.exc import IntegrityError
+        self.migrate('upgrade', 'c83f1a520bd4')
+        with self.engine.begin() as connection:
+            user_id = connection.scalar(text("INSERT INTO users(name,email,password_hash,created_at) VALUES ('Job Tester','jobs@example.com','test-hash',now()) RETURNING id"))
+        self.migrate('upgrade', 'head')
+        columns = {column['name']: column for column in inspect(self.engine).get_columns('job_imports')}
+        self.assertEqual(str(columns['draft_data']['type']), 'JSONB')
+        with self.engine.begin() as lock:
+            lock.execute(text('SELECT id FROM users WHERE id=:id FOR UPDATE'), {'id':user_id})
+            with Session(self.engine) as db:
+                with self.assertRaises(UserException) as caught:
+                    JobService(JobRepository(db)).create(user_id, JobCreate(title='Locked'))
+                self.assertEqual(caught.exception.status_code,409)
+        with Session(self.engine,expire_on_commit=False) as db:
+            service = JobService(JobRepository(db))
+            imported = service.import_email(user_id,'Title: Engineer\nCompany: Example\nApply: https://example.com/jobs?id=1&utm_source=email')
+            self.assertEqual(service.import_email(user_id,imported.raw_text).id,imported.id)
+            job = service.create(user_id,JobCreate(title='Reviewed Engineer',import_id=imported.id,application_url=imported.draft_data.application_url))
+            self.assertEqual(job.source.raw_text,imported.raw_text)
+            with self.assertRaises(UserException):
+                service.create(user_id,JobCreate(title='Duplicate',application_url='https://EXAMPLE.com:443/jobs?id=1#apply'))
+            original = db.get(Job,job.id)
+            db.add(Job(user_id=user_id,source_type='manual',title='Race',url_hash=original.url_hash,skills=[]))
+            with self.assertRaises(IntegrityError): db.commit()
+            db.rollback()
+            self.assertEqual(service.repository.list(user_id)['total'],1)
+        self.migrate('downgrade','c83f1a520bd4')
+        self.assertNotIn('jobs',inspect(self.engine).get_table_names())
+        with self.engine.connect() as connection:
+            self.assertEqual(connection.scalar(text('SELECT name FROM users WHERE id=:id'),{'id':user_id}),'Job Tester')
+
+
+    def test_sprint5_matching_migration_lock_and_preservation(self):
+        from sqlalchemy.orm import Session
+        from app.models.user import User
+        from app.models.profile import Profile
+        from app.models.job import Job
+        from app.models.job_match import JobMatch
+        from app.repositories.match_repository import MatchRepository
+        from app.services.match_service import MatchService
+        from app.middlewares.exception_middleware import UserException
+        self.migrate('upgrade', 'd94a2b631ce5')
+        with Session(self.engine, expire_on_commit=False) as db:
+            user = User(name='Matching Test', email='matching@example.com', password_hash='test-hash')
+            db.add(user); db.flush(); user_id = user.id
+            profile = Profile(user_id=user_id, source_parser_version='test', revision=1, data={'skills': ['Python']})
+            job = Job(user_id=user_id, source_type='manual', title='Test role', skills=['Python', 'SQL'])
+            db.add_all([profile, job]); db.commit(); job_id = job.id
+        self.migrate('upgrade', 'head')
+        columns = {column['name']: column for column in inspect(self.engine).get_columns('job_matches')}
+        self.assertEqual(str(columns['matched_skills']['type']), 'JSONB')
+        with self.engine.begin() as lock:
+            lock.execute(text('SELECT id FROM users WHERE id=:id FOR UPDATE'), {'id': user_id})
+            with Session(self.engine) as db:
+                with self.assertRaises(UserException) as caught:
+                    MatchService(MatchRepository(db)).run(user_id)
+                self.assertEqual(caught.exception.status_code, 409)
+        with Session(self.engine, expire_on_commit=False) as db:
+            service = MatchService(MatchRepository(db))
+            self.assertEqual(service.run(user_id)['scored'], 1)
+            self.assertEqual(service.list(user_id)['items'][0]['score'], 50)
+            self.assertEqual(db.get(Job, job_id).revision, 1)
+        self.migrate('downgrade', 'd94a2b631ce5')
+        self.assertNotIn('job_matches', inspect(self.engine).get_table_names())
+        with self.engine.connect() as connection:
+            self.assertEqual(connection.scalar(text('SELECT title FROM jobs WHERE id=:id'), {'id': job_id}), 'Test role')
+
+
 if __name__ == '__main__':
     unittest.main()
