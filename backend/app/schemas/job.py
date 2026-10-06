@@ -88,6 +88,7 @@ class DuplicateJob(BaseModel):
 class JobImportResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    source_type: Literal['email', 'browser'] = 'email'
     raw_text: str
     draft_data: JobFields
     warnings: list[JobWarning]
@@ -100,7 +101,7 @@ class JobSummary(JobFields):
     model_config = ConfigDict(from_attributes=True)
     id: int
     title: str
-    source_type: Literal['manual', 'email']
+    source_type: Literal['manual', 'email', 'browser']
     source_import_id: int | None
     status: JobStatus
     revision: int

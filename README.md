@@ -4,6 +4,10 @@ A learning project for turning a resume into a reviewed career profile, then usi
 
 ## Current milestone
 
+Job-page capture now supports a Chrome extension preview, authenticated handoff, temporary extraction, and explicit **Add to jobs** or **Save for later**. See [browser extension setup](docs/BROWSER_CAPTURE.md).
+
+Sprint 6 adds Gmail job-alert ingestion into reviewed drafts, with manual batches and an opt-in background worker. See [Gmail setup](docs/GMAIL_SETUP.md) and the [Sprint 6 report](docs/SPRINT_6_REPORT.md).
+
 Sprint 5 adds explainable job matching: compare your confirmed profile with saved jobs, review matched/missing skills and coverage, and refresh outdated results. Sprint 4 job intake and the earlier resume/profile workflows remain available.
 
 **Current data flow:** PDF → original `raw_text` in `resumes` → Build draft → structured JSON in `resume_parses` → review and correct fields → explicitly confirm → independent JSON in `profiles` → Profile and Overview.
@@ -12,7 +16,7 @@ Sprint 5 adds explainable job matching: compare your confirmed profile with save
 
 **Matching flow:** confirmed profile skills + saved job skills → Find matches → versioned results in `job_matches` → ranked Matches page.
 
-Automatic mailbox ingestion, AI tailoring, and application automation remain later milestones. A confirmed profile is never overwritten by rebuilding a parsed draft.
+Gmail ingestion requires your Google OAuth configuration and a running worker for automatic sync. AI tailoring and application automation remain later milestones. A confirmed profile is never overwritten by rebuilding a parsed draft.
 
 See the [Sprint 5 report](docs/SPRINT_5_REPORT.md) for scoring, snapshots, APIs, and validation. See the [Sprint 4 report](docs/SPRINT_4_REPORT.md) for the job workflow, tables, APIs, validation, and limitations. See the [Sprint 3 report](docs/SPRINT_3_REPORT.md) for the new table, workflow, API, and validation. The [Sprint 2 report](docs/SPRINT_2_REPORT.md) documents the parser, and the [Sprint 1 report](docs/SPRINT_1_REPORT.md) documents the foundation.
 
@@ -76,7 +80,7 @@ API documentation: [localhost:8000/docs](http://localhost:8000/docs).
 
 ### Migration notes
 
-The migration head is `e05b3c742df6`. Run `python -m alembic upgrade head` to add `job_matches`, along with any earlier unapplied migrations. These migrations add tables; existing resume text and parsed drafts are not rewritten.
+The migration head is `a27d5e964fb8`. The latest migration adds browser source tracking for explicitly saved jobs/drafts. Run `python -m alembic upgrade head` to add `email_connections`, `email_messages`, and `email_sync_runs`, along with any earlier unapplied migrations. These migrations add tables; existing resume text and parsed drafts are not rewritten.
 
 Two historical migrations were repaired for new databases and databases still on earlier revisions:
 
@@ -175,7 +179,7 @@ Clean up this disposable container after testing:
 docker stop jobpilot-sprint1-migration-test
 ```
 
-Ordinary backend test discovery skips these seven tests unless the explicit test URL is provided.
+Ordinary backend test discovery skips these nine tests unless the explicit test URL is provided.
 
 ## Code map
 
@@ -193,3 +197,7 @@ Ordinary backend test discovery skips these seven tests unless the explicit test
 The upload service handles ordinary exceptions by rolling back database work and deleting the failed upload. A process crash or an ambiguous database connection failure at commit time can still require storage reconciliation; there is no background cleanup worker yet. File bytes are read in bounded chunks by the service, but production request-size/time limits still belong at the server/proxy boundary.
 
 The application is a local learning project, not a deployment-ready authentication platform. Production hardening, rate limiting, token revocation, backups, and deployment configuration are separate work. The empty `backend/Dockerfile` directory from the original scaffold is not a container build definition.
+
+### Sprint 6: automatic discovery, manual approval
+
+Gmail collects separate openings in **Job inbox → Discovered jobs**. Review and approve an opening to save it, or dismiss it and restore it later. Syncing no longer creates editable drafts automatically. Existing records are preserved; use **Discover from existing emails** to populate the queue from older imports. See the updated [Sprint 6 report](docs/SPRINT_6_REPORT.md) for the workflow, migrations, storage and validation.

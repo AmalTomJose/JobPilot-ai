@@ -85,17 +85,39 @@ class JobService:
             info = self.duplicate_info(row, import_id)
             raise UserException(409, info.reason, details={'duplicate': info.model_dump()})
 
-    def create(self, user_id, request: JobCreate):
+    def create(self, user_id, request: JobCreate, source_type='manual', candidate_id=None):
         try:
             self.repository.lock_owner(user_id)
+            from app.services.discovered_service import get as get_discovered, matching_discoveries
+            candidate = get_discovered(self.repository.db, user_id, candidate_id) if candidate_id else None
+            if candidate and candidate.status != 'pending':
+                raise UserException(409, 'This opportunity was already handled. Refresh Discovered jobs.')
+            if candidate and request.import_id:
+                raise UserException(422, 'Approve a discovered job without an unrelated draft.')
             if request.import_id and self.repository.get_import(request.import_id, user_id) is None:
                 raise UserException(404, 'Email import not found')
+            matches = matching_discoveries(self.repository.db, user_id, request.application_url)
+            for known in matches:
+                if known.status == 'approved' and known.job_id:
+                    existing = self.repository.get(known.job_id, user_id)
+                    if existing:
+                        raise UserException(409, 'This discovered opening is already saved.', details={'duplicate': self.duplicate_info(existing).model_dump()})
             fingerprint = url_fingerprint(request.application_url)
             self.check_duplicate(user_id, fingerprint, request.import_id)
+            if request.import_id:
+                source_type = self.repository.get_import(request.import_id, user_id).source_type
             row = Job(user_id=user_id, source_import_id=request.import_id,
-                      source_type='email' if request.import_id else 'manual', url_hash=fingerprint,
+                      source_type=source_type, url_hash=fingerprint,
                       **request.model_dump(exclude={'import_id'}))
             self.repository.add(row)
+            self.repository.db.flush()
+            # Saving via extension/manual entry also resolves matching discoveries.
+            if candidate and candidate not in matches:
+                matches.append(candidate)
+            for item in matches:
+                item.draft_data = request.model_dump(mode='json', exclude={'import_id'})
+                item.status = 'approved'
+                item.job_id = row.id
             self.repository.commit()
             return self.detail(row)
         except Exception as error:

@@ -219,6 +219,7 @@ svg {
   min-height:100vh
 }
 .sidebar {
+  overflow-y:auto;
   position:fixed;
   inset:0 auto 0 0;
   width:236px;
@@ -1868,3 +1869,25 @@ svg {
 .match-breakdown li { display: flex; flex-direction: column; gap: .25rem; }
 .match-explainer h2 { font-size: 1.05rem; }
 @media (max-width: 650px) { .match-breakdown { grid-template-columns: 1fr; } .match-card { padding: 1rem; } }
+
+.gmail-panel { overflow-wrap: anywhere; }
+.gmail-panel h2 { margin: .4rem 0; }
+.gmail-selection { margin: 1.5rem 0; }
+.gmail-checkbox { display: flex; align-items: center; gap: .6rem; margin: 1rem 0; }
+.gmail-checkbox input { flex-shrink: 0; }
+.gmail-sync-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+.gmail-message { border-top: 1px solid var(--border); padding: 1rem 0; }
+.gmail-disconnect { margin-top: 1.5rem; }
+.gmail-panel summary { cursor: pointer; font-weight: 600; }
+
+/* Explicit job-page capture and separate openings from an email digest. */
+.capture-intake { max-width: 980px; }
+.capture-intake form { margin-top: 24px; }
+.email-openings { display: grid; gap: 14px; margin-top: 16px; }
+.email-opening { padding: 18px; border: 1px solid var(--border, #dce4dd); border-radius: 12px; background: #f8faf7; overflow-wrap: anywhere; }
+.email-opening h4 { margin: 0 0 12px; }
+.email-opening .button-row { flex-wrap: wrap; }
+
+/* Source-specific discovery navigation remains scrollable with the main sidebar. */
+.discovery-caption { margin-top: 1.5rem; }
+.discovery-nav .nav-item { min-height: 40px; padding-block: .55rem; }

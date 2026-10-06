@@ -11,6 +11,7 @@ class JobImport(Base):
     __table_args__ = (UniqueConstraint('user_id', 'source_hash', name='uq_job_imports_user_hash'),)
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    source_type: Mapped[str] = mapped_column(String(10), default='email', nullable=False)
     raw_text: Mapped[str] = mapped_column(Text, nullable=False)
     source_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     parser_version: Mapped[str] = mapped_column(String(40), nullable=False)
@@ -25,7 +26,7 @@ class Job(Base):
         UniqueConstraint('user_id', 'url_hash', name='uq_jobs_user_url'),
         UniqueConstraint('source_import_id', name='uq_jobs_import'),
         CheckConstraint("status IN ('saved', 'archived')", name='ck_jobs_status'),
-        CheckConstraint("source_type IN ('manual', 'email')", name='ck_jobs_source'),
+        CheckConstraint("source_type IN ('manual', 'email', 'browser')", name='ck_jobs_source'),
         CheckConstraint("work_mode IS NULL OR work_mode IN ('remote', 'hybrid', 'onsite')", name='ck_jobs_work_mode'),
         CheckConstraint('revision >= 1', name='ck_jobs_revision'),
         Index('ix_jobs_user_created', 'user_id', 'created_at', 'id'),

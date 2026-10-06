@@ -1,3 +1,5 @@
+import {Link} from 'react-router-dom';
+import GmailConnection from '../../components/Gmail/GmailConnection';
 import { useAuth } from '../../hooks/useAuth';
 import PageHeader from '../../components/ui/PageHeader';
 import Icon from '../../components/ui/Icon';
@@ -6,6 +8,14 @@ export default function Settings() {
     return <>
     <PageHeader eyebrow="MAKE YOURSELF AT HOME" title="Settings" description="Your account and workspace, at a glance."/>
     <div className="settings-stack">
+    <GmailConnection/>
+    <section className="card">
+        <span className="eyebrow">CLICK · PREVIEW · SEND</span>
+        <h2>Import a job page</h2>
+        <p>Use the JobPilot Chrome extension on permitted sites, or paste a description. Review first, then add the job or save a draft for later.</p>
+        <p className="form-note">Load the extension folder through Chrome’s Load unpacked option. Full setup steps are in docs/BROWSER_CAPTURE.md. LinkedIn uses the manual paste fallback.</p>
+        <Link className="btn btn-secondary" to="/jobs/capture">Open job-page import</Link>
+    </section>
     <section className="card">
     <div className="setting-heading">
     <span className="feature-icon">
@@ -34,13 +44,6 @@ export default function Settings() {
     <h2>Workspace preferences</h2>
     <p className="muted">More ways to make JobPilot yours are on the roadmap.</p>
     </div>
-    </div>
-    <div className="setting-row">
-    <div>
-    <h3>Email connections</h3>
-    <p>Connect a mailbox for job email ingestion in a future update.</p>
-    </div>
-    <span className="pill neutral">Planned</span>
     </div>
     <div className="setting-row">
     <div>

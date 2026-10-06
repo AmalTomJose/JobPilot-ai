@@ -1,3 +1,5 @@
+from app.core.oauth_logging import install_oauth_log_filter
+from app.api.routes.email import router as email_router
 from app.api.routes.match import router as match_router
 from app.core.config import settings
 from fastapi import FastAPI
@@ -9,6 +11,8 @@ from app.api.routes.resume import router as resume_router
 
 from app.middlewares.exception_middleware import register_exception_handlers
 
+
+install_oauth_log_filter()
 
 app = FastAPI(title = "Jobpilot API")
 
@@ -32,3 +36,5 @@ app.include_router(profile_router)
 app.include_router(job_router)
 
 app.include_router(match_router)
+
+app.include_router(email_router)

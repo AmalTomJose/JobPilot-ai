@@ -8,6 +8,8 @@ from alembic import context
 #my imports:
 from app.database.base import Base
 from app.core.config import settings
+from app.models.discovered_job import DiscoveredJob
+from app.models.email import EmailConnection, EmailMessage, EmailSyncRun
 from app.models.job_match import JobMatch
 from app.models.job import Job, JobImport
 from app.models.profile import Profile

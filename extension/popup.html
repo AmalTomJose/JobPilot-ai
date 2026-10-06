@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JobPilot preview</title><link rel="stylesheet" href="popup.css"></head>
+<body><header><span>JOBPILOT</span><h1>Preview this opportunity</h1><p>Only send information you want in your workspace.</p></header>
+<p id="message" role="status">Reading the job section…</p>
+<form id="preview" hidden>
+<label>Job title<input id="title" maxlength="255"></label>
+<label>Company<input id="company" maxlength="255"></label>
+<label>Job URL<input id="url" type="url" required maxlength="2048"></label>
+<label>Full description<textarea id="description" rows="10" minlength="40" maxlength="20000" required></textarea></label>
+<label class="check"><input id="permission" type="checkbox" required> I reviewed this text and this site permits importing it.</label>
+<p>Send opens localhost:5173. Nothing is saved as a job or draft until you choose to save in JobPilot.</p>
+<button id="send" type="submit">Send to JobPilot</button>
+<button id="cancel" type="button">Cancel</button>
+</form>
+<a href="http://localhost:5173/jobs/capture" target="_blank" rel="noreferrer">Open JobPilot to paste manually</a>
+<script type="module" src="popup.js"></script></body></html>

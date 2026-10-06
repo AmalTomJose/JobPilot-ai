@@ -235,6 +235,86 @@ class PostgresMigrationTests(unittest.TestCase):
         with self.engine.connect() as connection:
             self.assertEqual(connection.scalar(text('SELECT title FROM jobs WHERE id=:id'), {'id': job_id}), 'Test role')
 
+    def test_gmail_tables_jsonb_uniqueness_lock_and_downgrade(self):
+        from sqlalchemy.exc import IntegrityError, DBAPIError
+        self.migrate('upgrade', 'e05b3c742df6')
+        with self.engine.begin() as db:
+            owner = db.execute(text("INSERT INTO users(name,email,password_hash,created_at) VALUES ('Gmail Test','gmail@example.com','synthetic',now()) RETURNING id")).scalar_one()
+        self.migrate('upgrade', 'head')
+        columns = {c['name']: c for c in inspect(self.engine).get_columns('email_messages')}
+        self.assertEqual(str(columns['payload_data']['type']), 'JSONB')
+        insert = text("INSERT INTO email_connections(user_id,status,auto_sync,failure_count,created_at) VALUES (:owner,'disconnected',false,0,now())")
+        with self.engine.begin() as db:
+            db.execute(insert, {'owner': owner})
+        with self.assertRaises(IntegrityError):
+            with self.engine.begin() as db:
+                db.execute(insert, {'owner': owner})
+        with self.engine.connect() as first, self.engine.connect() as second:
+            first.execute(text("SELECT * FROM email_connections WHERE user_id=:owner FOR UPDATE"), {'owner': owner})
+            with self.assertRaises(DBAPIError) as caught:
+                second.execute(text("SELECT * FROM email_connections WHERE user_id=:owner FOR UPDATE NOWAIT"), {'owner': owner})
+            self.assertEqual(caught.exception.orig.sqlstate, '55P03')
+            second.rollback()
+            first.rollback()
+        self.migrate('downgrade', 'e05b3c742df6')
+        self.assertNotIn('email_connections', inspect(self.engine).get_table_names())
+        with self.engine.connect() as db:
+            self.assertEqual(db.execute(text("SELECT email FROM users WHERE id=:owner"), {'owner': owner}).scalar_one(), 'gmail@example.com')
+
+
+    def test_browser_source_migration_preserves_existing_imports(self):
+        self.migrate('upgrade', 'f16c4d853ea7')
+        with self.engine.begin() as db:
+            owner = db.execute(text("INSERT INTO users(name,email,password_hash,created_at) VALUES ('Capture Test','capture@example.com','synthetic',now()) RETURNING id")).scalar_one()
+            imported = db.execute(text("INSERT INTO job_imports(user_id,raw_text,source_hash,parser_version,draft_data,warnings,created_at) VALUES (:owner,'original','abc','test','{}','[]',now()) RETURNING id"), {'owner':owner}).scalar_one()
+        self.migrate('upgrade', 'head')
+        with self.engine.begin() as db:
+            self.assertEqual(db.execute(text("SELECT source_type FROM job_imports WHERE id=:id"), {'id':imported}).scalar_one(), 'email')
+            db.execute(text("INSERT INTO jobs(user_id,source_type,title,skills,status,revision,created_at,updated_at) VALUES (:owner,'browser','Captured job','[]','saved',1,now(),now())"), {'owner':owner})
+        self.migrate('downgrade', 'f16c4d853ea7')
+        with self.engine.connect() as db:
+            self.assertEqual(db.execute(text("SELECT raw_text FROM job_imports WHERE id=:id"), {'id':imported}).scalar_one(),'original')
+            self.assertEqual(db.execute(text("SELECT source_type FROM jobs WHERE user_id=:owner"), {'owner':owner}).scalar_one(),'manual')
+
+    def test_discovery_migration_preserves_jobs_and_serializes_approval(self):
+        from app.models.resume import Resume  # Register the User relationship target.
+        from sqlalchemy.orm import Session
+        from app.models.email import EmailMessage
+        from app.models.discovered_job import DiscoveredJob
+        from app.models.job import Job
+        from app.services.discovered_service import discover, set_status
+        from app.services.job_service import JobService
+        from app.repositories.job_repository import JobRepository
+        from app.schemas.job import JobCreate
+        from app.middlewares.exception_middleware import UserException
+        self.migrate('upgrade', 'a27d5e964fb8')
+        with self.engine.begin() as db:
+            owner = db.execute(text("INSERT INTO users(name,email,password_hash,created_at) VALUES ('Discovery Test','discovery@example.com','synthetic',now()) RETURNING id")).scalar_one()
+            db.execute(text("INSERT INTO jobs(user_id,source_type,title,skills,status,revision,created_at,updated_at) VALUES (:owner,'manual','Existing job','[]','saved',1,now(),now())"), {'owner':owner})
+        self.migrate('upgrade', 'head')
+        columns = {c['name']: c for c in inspect(self.engine).get_columns('discovered_jobs')}
+        self.assertEqual(str(columns['draft_data']['type']), 'JSONB')
+        with Session(self.engine, expire_on_commit=False) as db:
+            message = EmailMessage(user_id=owner, mailbox_email='test@example.com', provider_message_id='one', subject='Opening', sender='test@example.com', payload_data={}, raw_text='Title: Python Developer', status='discovered')
+            db.add(message); db.flush(); discover(db, message); db.commit()
+            candidate = db.query(DiscoveredJob).one(); candidate_id = candidate.id
+        with self.engine.begin() as lock:
+            lock.execute(text('SELECT id FROM users WHERE id=:id FOR UPDATE'), {'id':owner})
+            with Session(self.engine) as db:
+                with self.assertRaises(UserException) as caught:
+                    JobService(JobRepository(db)).create(owner, JobCreate(title='Python Developer'), source_type='email', candidate_id=candidate_id)
+                self.assertEqual(caught.exception.status_code, 409)
+                with self.assertRaises(UserException) as dismissed:
+                    set_status(db, owner, candidate_id, 'dismissed')
+                self.assertEqual(dismissed.exception.status_code, 409)
+        with Session(self.engine) as db:
+            job = JobService(JobRepository(db)).create(owner, JobCreate(title='Reviewed developer'), source_type='email', candidate_id=candidate_id)
+            self.assertEqual(db.get(DiscoveredJob, candidate_id).job_id, job.id)
+            self.assertEqual(db.query(Job).count(), 2)
+        self.migrate('downgrade', 'a27d5e964fb8')
+        with self.engine.connect() as db:
+            self.assertEqual(db.scalar(text('SELECT count(*) FROM jobs')), 2)
+
 
 if __name__ == '__main__':
     unittest.main()

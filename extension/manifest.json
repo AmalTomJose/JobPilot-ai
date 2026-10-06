@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "JobPilot — Preview a job",
+  "version": "0.1.0",
+  "description": "Preview a job description, then explicitly send it to your local JobPilot workspace.",
+  "minimum_chrome_version": "102",
+  "permissions": ["activeTab", "scripting", "storage", "alarms"],
+  "action": {"default_popup": "popup.html", "default_title": "Preview this job"},
+  "background": {"service_worker": "background.js", "type": "module"},
+  "externally_connectable": {"matches": ["http://localhost/*"]},
+  "content_security_policy": {"extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'"}
+}

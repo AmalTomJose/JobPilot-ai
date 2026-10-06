@@ -7,6 +7,9 @@ import Profile from '../pages/Profile/Profile';
 import Settings from '../pages/Settings/Settings';
 import NotFound from '../pages/NotFound/NotFound';
 import Applications from '../pages/Applications/Applications';
+const DiscoveredJobs = lazy(() => import('../pages/Jobs/DiscoveredJobs'));
+const DiscoveredReview = lazy(() => import('../pages/Jobs/DiscoveredReview'));
+const JobCapture = lazy(() => import('../pages/Jobs/JobCapture'));
 const JobIntake = lazy(() => import('../pages/Jobs/JobIntake'));
 const JobReview = lazy(() => import('../pages/Jobs/JobReview'));
 const JobDetail = lazy(() => import('../pages/Jobs/JobDetail'));
@@ -40,6 +43,9 @@ const router = createBrowserRouter(createRoutesFromElements(<>
             <Route path="applications" element={<Applications />}/>
             <Route path="matches" element={<Matches />}/>
             <Route path="jobs" element={<Jobs />}/>
+            <Route path="jobs/discovered" element={<DiscoveredJobs/>}/>
+            <Route path="jobs/discovered/:candidateId" element={<DiscoveredReview/>}/>
+            <Route path="jobs/capture" element={<JobCapture/>}/>
             <Route path="jobs/new" element={<JobEditor/>}/>
             <Route path="jobs/import" element={<JobIntake/>}/>
             <Route path="jobs/imports/:importId/review" element={<JobReview/>}/>
