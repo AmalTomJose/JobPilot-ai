@@ -24,7 +24,7 @@ function Detail({id}:{id:number}) {
     if(error)return <section className="card"><p role="alert" className="notice error">{error}</p><button className="btn btn-secondary" onClick={()=>setAttempt(value=>value+1)}>Retry</button> <Link className="text-link" to="/jobs">Back to jobs</Link></section>;
     if(!job)return <p role="status">Loading saved job…</p>;
     return <>
-        <PageHeader eyebrow="YOUR JOB INBOX" title={job.title} description={job.company ?? 'Company not provided'} action={<Link className="btn btn-primary" to={`/jobs/${job.id}/edit`}>Edit job</Link>}/>
+        <PageHeader eyebrow="YOUR JOB INBOX" title={job.title} description={job.company ?? 'Company not provided'} action={<div className="button-row"><Link className="btn btn-primary" to={`/jobs/${job.id}/tailoring`}>Tailor my resume</Link><Link className="btn btn-secondary" to={`/jobs/${job.id}/edit`}>Edit job</Link></div>}/>
         <div className="review-intro"><span className={`pill ${job.status==='saved'?'teal':'neutral'}`}>{job.status==='saved'?'Saved job':'Archived job'}</span><span className="pill neutral">{job.source_type==='browser'?'From job page':job.source_type==='email'?'From email':'Manually added'}</span><Link className="text-link" to="/jobs">Back to jobs</Link></div>
         <section className="card job-detail"><dl className="detail-list"><div><dt>Location</dt><dd>{job.location??'Not provided'}</dd></div><div><dt>Work arrangement</dt><dd>{job.work_mode??'Not provided'}</dd></div><div><dt>Employment type</dt><dd>{job.employment_type??'Not provided'}</dd></div></dl>
             <div className="draft-section"><h2>Job description</h2><p className="job-description">{job.description??'No description added.'}</p></div>

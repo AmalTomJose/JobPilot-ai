@@ -1,8 +1,8 @@
 # Service Summary
 
-Backend quick reference · JobPilot AI · Updated 2 October 2026
+Backend quick reference · JobPilot AI · Updated 6 October 2026
 
-**Scope:** all 19 Python modules currently in `backend/app/services`, including constructors, parser callbacks and nested helpers. This is a snapshot of the implemented code, not the future AI/RAG plan.
+**Scope:** all 22 Python modules currently in `backend/app/services`, including constructors, parser callbacks and nested helpers. This is a snapshot of the implemented code, not the future AI/RAG plan.
 
 ## Read this first
 
@@ -33,6 +33,8 @@ Backend quick reference · JobPilot AI · Updated 2 October 2026
 | Approve discovery | Approval route → `JobService.create(candidate_id=...)` → save job + mark approved |
 | Dismiss / restore | `set_status()` inside `mutation()` |
 | Matching | `MatchService.run()` → `match_skills()` → store comparison; `list()` flags outdated results |
+| Resume tailoring | `TailoringService.generate()` → `facts_for()` → `generate_proposal()` → `assemble()` → separate draft |
+| Tailored PDF | User reviews → `TailoringService.save(approve=True)` → approved/current checks → `render_resume()` |
 
 ## Sync vs discover vs backfill vs approve
 
@@ -67,6 +69,10 @@ Backend quick reference · JobPilot AI · Updated 2 October 2026
 | [match_service.py](../backend/app/services/match_service.py) | Run, save and present profile/job comparisons |
 | [skill_matcher.py](../backend/app/services/skill_matcher.py) | Explainable skill coverage calculation |
 | [text_rules.py](../backend/app/services/text_rules.py) | Shared text and skill helpers |
+| [job_sources.py](../backend/app/services/job_sources.py) | Source classification and explicit provider job IDs |
+| [tailoring_ai.py](../backend/app/services/tailoring_ai.py) | Optional OpenAI request and validated structured proposal |
+| [tailoring_service.py](../backend/app/services/tailoring_service.py) | Evidence, independent versions, editing and approval |
+| [tailoring_pdf.py](../backend/app/services/tailoring_pdf.py) | Approved resume content → selectable-text PDF |
 
 ## 1. auth_service.py
 
@@ -350,14 +356,14 @@ Normal Gmail scheduling: another page remains → five minutes; scan finished �
 
 ## Current boundaries
 
-- Parsing and matching use rules, not an LLM. RAG retrieval, agent search, tailoring and application automation are future work.
+- Resume/job parsing and skill matching still use rules. Optional OpenAI resume tailoring is implemented separately and requires backend configuration. RAG retrieval, agent search and application automation remain future work.
 - Gmail sync creates discoveries, not automatic editable drafts. Manual email paste and browser Save for later explicitly create drafts.
 - Source email bodies are still retained. Backfill does not clean them up.
 - URL deduplication is not semantic duplicate detection; different URLs can describe the same job.
 - The PDF reader does not provide OCR for scanned resumes.
 - Standalone capture previews do not save database rows until an explicit save.
 
-**Memory sentence:** Extractors get text. Parsers organize it. Services manage the workflow. The database stores it. You approve it. Matching compares it.
+**Memory sentence:** Extractors get text. Parsers organize it. Matching compares it. AI proposes a tailored version. You review and approve it. PDF export renders the approved version. Services and the database keep the sources and versions separate.
 
 ## 19. job_sources.py
 
@@ -367,3 +373,62 @@ Normal Gmail scheduling: another page remains → five minutes; scan finished �
 | --- | --- | --- |
 | `source_site()` | Classifies a safe website hostname as LinkedIn, Naukri, Indeed or Other. | Returns source label; no network |
 | `provider_job_id()` | Reads explicit IDs from supported Naukri job-listings (including /jd/ email links) and Indeed jk links to recognize the same opening across URL variations. | Returns provider/ID pair or None |
+
+## 20. tailoring_ai.py
+
+**Purpose:** Server-side OpenAI connection for optional, explicitly requested resume tailoring.
+
+| Function | What it does | Data / side effect |
+| --- | --- | --- |
+| `configured()` | Checks that a backend key and model are present. | Returns boolean; never exposes the key |
+| `generate_proposal()` | Sends bounded profile facts and job context to OpenAI with a strict output schema; handles provider errors/refusals/timeouts. | External API call; returns validated proposal; no direct DB write |
+
+## 21. tailoring_service.py
+
+**Purpose:** Separate resume versions grounded in the reviewed profile, with manual approval.
+
+| Function | What it does | Data / side effect |
+| --- | --- | --- |
+| `facts_for()` / nested `walk()` | Builds source fact IDs while excluding contact fields and links. | Returns evidence dictionary |
+| `validate_order()` | Requires each of five supported resume sections exactly once. | Raises validation error |
+| `assemble()` / nested `statement()` | Validates evidence, entry references, existing skills and numeric claims, then builds a draft with unchanged identity fields. | Returns profile-shaped draft; cannot establish semantic truth |
+| `TailoringService.__init__()` | Binds the database session and job repository. | Setup only |
+| `source()` | Retrieves the owned job and current profile. | Owned database reads |
+| `get()` | Retrieves a version scoped by owner and job. | Owned database read |
+| `response()` | Adds whether source revisions changed to the version response. | Reads current profile/job |
+| `listing()` | Returns setup readiness and ten version summaries at a time. | Owned database read |
+| `generate()` | Checks consent/revisions/readiness, creates an idempotent generating version, releases the lock, calls AI and stores a draft or failure. | Writes version snapshots and proposal; never changes main profile |
+| `save()` | Saves edits or explicitly approves with owner locking and optimistic revision checks. Edits revoke previous approval. | Writes only the selected resume version |
+| `discard()` | Checks ownership and expected revision, then permanently removes a draft or failed version. Rejects approved or generating versions; preserves the profile and job. | Deletes one tailored_resumes row |
+
+## 22. tailoring_pdf.py
+
+**Purpose:** Export approved resume content as selectable PDF text.
+
+| Function | What it does | Data / side effect |
+| --- | --- | --- |
+| `render_resume()` | Builds an escaped, local A4 layout in the selected order, tries compact single-page layouts and rejects overflow. Approval is enforced by the route before calling it. | Returns PDF bytes in memory |
+| nested `text()` | Escapes all user/model text for the internal HTML layout. | No scripts or external resources |
+| nested `line()` | Joins nonempty factual fields for headings/contact details. | Returns escaped text |
+| nested `bullets()` | Turns description items into escaped bullet markup. | Returns internal layout markup |
+
+## 23. Approved resume file storage
+
+**Source:** `backend/app/services/tailoring_storage.py`
+
+| Function | What it does | Effect |
+| --- | --- | --- |
+| `resume_filename()` | Uses the profile first name and company to create a safe filename such as `amal_google_cv.pdf`. Missing values use resume/company. | No write |
+| `resume_filename.slug()` | Converts text to lowercase ASCII and removes path characters. | No write |
+| `approval_path()` | Separates PDFs by owner, job, version and revision beneath APPROVED_RESUME_DIR. | Computes private path |
+| `store_approved_pdf()` | Renders the approved content and exclusively writes a private PDF. Never overwrites an earlier approval. | Writes PDF on approval only |
+
+`TailoringService.save()` writes the PDF before committing approval. Storage failure rolls back approval; a failed database commit removes the newly written file. These files are independent approval archives: later edits, discarding a returned-to-draft version, or deleting database records do not remove earlier approved PDFs. They are excluded from Git and are not publicly served.
+
+## One-page tailoring update — 7 October 2026
+
+AI is instructed to tailor every experience and project to the selected job using only that entry's verified facts, preserving its core contribution in concise bullets. Validation requires every source entry exactly once and disallows empty generated descriptions when the source has content. This checks coverage, not semantic completeness; review each rewritten claim. Prompt version: `tailoring-v2-all-entries-one-page`.
+
+PDF generation tries compact A4 layouts with body text no smaller than 9.5pt. It returns one page or reports that the summary/bullets must be shortened; it never silently truncates or creates a second page. An oversized approval leaves the draft unapproved and writes no PDF. Previously archived files stay unchanged; generate a new version to apply the new AI instructions.
+
+Validation: 15 tailoring backend tests passed, including missing-entry/description rejection, one-page text preservation, overflow rejection and approval rollback. A synthetic PDF was rendered and visually inspected. Live model quality has not been verified in this change.

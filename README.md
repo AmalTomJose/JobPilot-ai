@@ -201,3 +201,7 @@ The application is a local learning project, not a deployment-ready authenticati
 ### Sprint 6: automatic discovery, manual approval
 
 Gmail collects separate openings in **Job inbox → Discovered jobs**. Review and approve an opening to save it, or dismiss it and restore it later. Syncing no longer creates editable drafts automatically. Existing records are preserved; use **Discover from existing emails** to populate the queue from older imports. See the updated [Sprint 6 report](docs/SPRINT_6_REPORT.md) for the workflow, migrations, storage and validation.
+
+## AI-assisted resume tailoring
+
+Saved jobs now offer **Tailor my resume**: generate a separate OpenAI draft, review its evidence, edit, approve and download a PDF. Requires backend-only `OPENAI_API_KEY` and `OPENAI_MODEL`; disabled until configured. See [setup](docs/AI_TAILORING_SETUP.md) and [Sprint 7 report](docs/SPRINT_7_REPORT.md).

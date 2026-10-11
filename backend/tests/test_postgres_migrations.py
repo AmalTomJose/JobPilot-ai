@@ -316,5 +316,43 @@ class PostgresMigrationTests(unittest.TestCase):
             self.assertEqual(db.scalar(text('SELECT count(*) FROM jobs')), 2)
 
 
+    def test_tailoring_snapshot_migration_and_owner_lock(self):
+        from app.main import app  # Register all model relationships.
+        from sqlalchemy.orm import Session
+        from app.models.profile import Profile
+        from app.models.job import Job
+        from app.models.user import User
+        from app.services.tailoring_service import TailoringService
+        from app.schemas.tailoring import GenerateTailoring, SaveTailoring
+        from app.core.config import settings
+        from app.middlewares.exception_middleware import UserException
+        from test_tailoring import profile_data, proposal
+        from unittest.mock import patch
+        from pydantic import SecretStr
+        from uuid import uuid4
+        self.migrate('upgrade', 'c49f70b861da')
+        with Session(self.engine) as db:
+            owner = User(name='Test',email='tailoring@example.com',password_hash='synthetic')
+            db.add(owner);db.flush();owner_id=owner.id
+            job=Job(user_id=owner_id,title='Developer',source_type='manual',description='Build Python services with reviewed requirements.',skills=['Python'])
+            db.add(job);db.add(Profile(user_id=owner_id,source_parser_version='test',data=profile_data()))
+            db.flush();job_id=job.id;db.commit()
+        self.migrate('upgrade','head')
+        with Session(self.engine,expire_on_commit=False) as db, patch.object(settings,'OPENAI_API_KEY',SecretStr('test')), patch.object(settings,'OPENAI_MODEL','test-model'), patch('app.services.tailoring_ai.generate_proposal',return_value=proposal()):
+            item=TailoringService(db).generate(owner_id,job_id,GenerateTailoring(request_id=uuid4(),profile_revision=1,job_revision=1,consent=True))
+            self.assertEqual(item.profile_snapshot,profile_data())
+        with self.engine.begin() as locked:
+            locked.execute(text('SELECT id FROM users WHERE id=:id FOR UPDATE'),{'id':owner_id})
+            with Session(self.engine) as db:
+                with self.assertRaises(UserException) as caught:
+                    TailoringService(db).save(owner_id,job_id,item.id,SaveTailoring(expected_revision=1,data=item.data,section_order=item.section_order,approve=True))
+                self.assertEqual(caught.exception.status_code,409)
+        self.migrate('downgrade','c49f70b861da')
+        with self.engine.connect() as db:
+            self.assertEqual(db.scalar(text('SELECT count(*) FROM jobs')),1)
+            self.assertEqual(db.scalar(text('SELECT count(*) FROM profiles')),1)
+        self.assertNotIn('tailored_resumes',inspect(self.engine).get_table_names())
+
+
 if __name__ == '__main__':
     unittest.main()

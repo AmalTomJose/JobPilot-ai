@@ -59,3 +59,6 @@ yarn-error.log*
 # Private uploaded documents
 backend/uploads/
 !**/.env.example
+
+# Private approved resume PDFs
+backend/approved_resumes/

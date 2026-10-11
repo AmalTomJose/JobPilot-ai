@@ -17,7 +17,7 @@ Updated: 2 October 2026. Gmail ingestion, multi-job discovery, and browser-assis
 A “candidate” means a possible job opportunity, not an applicant. The UI calls them **Discovered jobs**.
 
 ## What changed from the original Sprint 6 implementation
-
+    
 - Gmail no longer creates `job_imports` automatically, including for single-job emails.
 - Added persistent, owner-scoped discovered openings with pending/dismissed/approved states.
 - Added separate review, approve, dismiss, restore, and paginated list actions.

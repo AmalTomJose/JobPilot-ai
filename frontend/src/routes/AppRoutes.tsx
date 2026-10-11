@@ -15,6 +15,7 @@ const JobReview = lazy(() => import('../pages/Jobs/JobReview'));
 const JobDetail = lazy(() => import('../pages/Jobs/JobDetail'));
 const JobEditor = lazy(() => import('../components/Jobs/JobEditor'));
 const Matches = lazy(() => import('../pages/Matches/Matches'));
+const Tailoring = lazy(() => import('../pages/Tailoring/Tailoring'));
 const Jobs = lazy(() => import('../pages/Jobs/Jobs'));
 import Register from '../pages/Register/Register';
 import Resume from '../pages/Resume/Resume';
@@ -49,6 +50,7 @@ const router = createBrowserRouter(createRoutesFromElements(<>
             <Route path="jobs/new" element={<JobEditor/>}/>
             <Route path="jobs/import" element={<JobIntake/>}/>
             <Route path="jobs/imports/:importId/review" element={<JobReview/>}/>
+            <Route path="jobs/:jobId/tailoring" element={<Tailoring/>}/>
             <Route path="jobs/:jobId" element={<JobDetail/>}/>
             <Route path="jobs/:jobId/edit" element={<JobReview editing/>}/>
             <Route path="resume" element={<Resume />}/>

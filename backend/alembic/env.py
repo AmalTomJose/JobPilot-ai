@@ -6,6 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 #my imports:
+from app.models.tailored_resume import TailoredResume
 from app.database.base import Base
 from app.core.config import settings
 from app.models.discovered_job import DiscoveredJob

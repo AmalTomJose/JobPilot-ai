@@ -1,3 +1,4 @@
+from app.api.routes.tailoring import router as tailoring_router
 from app.core.oauth_logging import install_oauth_log_filter
 from app.api.routes.email import router as email_router
 from app.api.routes.match import router as match_router
@@ -38,3 +39,5 @@ app.include_router(job_router)
 app.include_router(match_router)
 
 app.include_router(email_router)
+
+app.include_router(tailoring_router)

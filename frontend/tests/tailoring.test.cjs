@@ -1,0 +1,32 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {load}=require('./load-source.cjs');
+const {tailoringService}=load('services/tailoring.service.ts');
+const {default:api}=load('api/axios.ts');
+global.localStorage={getItem:()=> 'synthetic-token'};
+test('AI generation and approval are separate authenticated operations',async()=>{
+ const calls=[];
+ api.defaults.adapter=async config=>{calls.push(config);return {data:{},status:200,statusText:'OK',headers:{},config};};
+ await tailoringService.list(7,10);
+ await tailoringService.generate(7,'request-id',2,3);
+ await tailoringService.save(7,8,1,{summary:'Reviewed'},['summary','skills','experience','projects','education'],false);
+ await tailoringService.save(7,8,2,{summary:'Reviewed'},['summary','skills','experience','projects','education'],true);
+ await tailoringService.pdf(7,8);
+ assert.deepEqual(calls[0].params,{offset:10});
+ assert.equal(calls[1].timeout,90000);
+ assert.deepEqual(JSON.parse(calls[1].data),{request_id:'request-id',profile_revision:2,job_revision:3,consent:true});
+ assert.equal(JSON.parse(calls[2].data).approve,false);
+ assert.equal(JSON.parse(calls[3].data).approve,true);
+ assert.equal(calls[4].responseType,'blob');
+ assert.ok(calls.every(call=>call.headers.Authorization==='Bearer synthetic-token'));
+ assert.ok(calls.every(call=>!call.url.includes('openai.com')));
+});
+test('discard uses the owned version endpoint and expected revision',async()=>{
+ let call;
+ api.defaults.adapter=async config=>{call=config;return {data:null,status:204,statusText:'No Content',headers:{},config};};
+ await tailoringService.discard(7,8,3);
+ assert.equal(call.method,'delete');
+ assert.equal(call.url,'/jobs/7/tailoring/8');
+ assert.deepEqual(call.params,{expected_revision:3});
+ assert.equal(call.headers.Authorization,'Bearer synthetic-token');
+});
